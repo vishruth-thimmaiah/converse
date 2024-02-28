@@ -1,0 +1,46 @@
+.main-window {
+	border-radius: 10px;
+}
+
+.label-model {
+	background-color: @insensitive_base_color;
+	font-size: 17px;
+	margin: 5px 30px 5px 10px;
+	border-radius: 4px 10px 10px 10px;
+	padding: 10px;
+}
+
+.label-user {
+	background-color: @theme_selected_bg_color;
+	font-size: 17px;
+	margin: 15px 10px 5px 30px;
+	border-radius: 10px 4px 10px 10px;
+	padding: 10px;
+}
+
+.control-area {
+	border-radius: 10px;
+	margin: 5px;
+	padding: 5px;
+}
+
+.entry {
+	font-size: 20px;
+	padding: 5px;
+	margin: 5px;
+}
+
+.send-button {
+	border-radius: 20px;
+	margin: 5px;
+}
+
+.model-combobox {
+	font-size: 20px;
+	font-weight: bold;
+	margin: 5px;
+}
+
+.truncate-chat {
+	margin: 5px;
+}
