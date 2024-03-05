@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use serde_json::json;
 
-use crate::gemini::ChatContent;
+use crate::models::gemini::ChatContent;
 
 pub struct Cache {}
 

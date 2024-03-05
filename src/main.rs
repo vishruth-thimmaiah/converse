@@ -1,7 +1,6 @@
-mod gemini;
+mod models;
 mod parser;
 
-use gemini::Gemini;
 use parser::{cache::Cache, config::Config, md2pango::md2pango};
 
 use gdk::gio;
@@ -158,8 +157,9 @@ impl UI {
 
         send_button.connect_clicked(
             clone!(@weak entry, @weak chat_box_layout, @weak window => move |button| {
-                let gemini_config = config.gemini.clone();
+                let gemini_config = config.clone();
                 let entry_text = entry.text();
+                let selected_model = model_combobox.active_text().unwrap().to_string();
 
                 if !entry_text.is_empty() {
 
@@ -180,7 +180,7 @@ impl UI {
                     window.show_all();
 
                     runtime().spawn(clone!(@strong sender => async move {
-                        let response = Gemini::request(&entry_text, gemini_config).await;
+                        let response = models::select_model(&selected_model, &entry_text, gemini_config).await;
                         sender.send(response).await.expect("The channel needs to be open.");
                     }));
                 }
