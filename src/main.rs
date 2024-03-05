@@ -12,6 +12,7 @@ use gtk::{
     ScrolledWindow,
 };
 use gtk_layer_shell::{Edge, Layer, LayerShell};
+use serde_json::json;
 use std::sync::OnceLock;
 use tokio::runtime::Runtime;
 
@@ -85,6 +86,7 @@ impl UI {
         model_combobox.style_context().add_class("model-combobox");
         let model_list = ListStore::new(&[String::static_type()]);
         model_list.set(&model_list.append(), &[(0, &"Gemini")]);
+        model_list.set(&model_list.append(), &[(0, &"Cohere")]);
         model_combobox.set_model(Some(&model_list));
         model_combobox.set_active(Some(0));
 
@@ -119,6 +121,9 @@ impl UI {
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
 
+        let contains_history = Self::update(&chat_box_layout);
+        model_combobox.set_sensitive(!contains_history);
+
         let (sender, receiver) = async_channel::bounded(1);
 
         // Event Handlers.
@@ -141,12 +146,15 @@ impl UI {
             state
         });
 
-        truncate_button.connect_clicked(clone!( @weak chat_box_layout => move |_| {
-            Cache::truncate();
-            for child in chat_box_layout.children() {
-                chat_box_layout.remove(&child);
-            }
-        }));
+        truncate_button.connect_clicked(
+            clone!( @weak chat_box_layout, @weak model_combobox => move |_| {
+                Cache::truncate();
+                model_combobox.set_sensitive(true);
+                for child in chat_box_layout.children() {
+                    chat_box_layout.remove(&child);
+                }
+            }),
+        );
 
         send_button.connect_clicked(
             clone!(@weak entry, @weak chat_box_layout, @weak window => move |button| {
@@ -168,6 +176,7 @@ impl UI {
                     entry.delete_text(0, -1);
                     entry.set_sensitive(false);
                     button.set_sensitive(false);
+                    model_combobox.set_sensitive(false);
                     window.show_all();
 
                     runtime().spawn(clone!(@strong sender => async move {
@@ -209,33 +218,35 @@ impl UI {
             }),
         );
 
-        Self::update(chat_box_layout);
-
         window.show_all();
     }
 
-    pub fn update(chat_area: Box) {
-        let chats = Cache::read();
+    pub fn update(chat_area: &Box) -> bool {
+        let chats = &Cache::read()["contents"];
+        if chats != &json!([]) {
+            for chat in chats.as_array().unwrap() {
+                let answer = chat["parts"][0]["text"].as_str().unwrap();
+                let answer_box = Box::new(gtk::Orientation::Vertical, 0);
 
-        for chat in chats["contents"].as_array().unwrap() {
-            let answer = chat["parts"][0]["text"].as_str().unwrap();
-            let answer_box = Box::new(gtk::Orientation::Vertical, 0);
+                if chat["role"] == "user" {
+                    let label_user = Self::new_label(answer, true, false);
+                    answer_box.pack_start(&label_user, false, false, 0);
+                    answer_box.set_halign(gtk::Align::End);
+                    answer_box.style_context().add_class("label-user");
+                } else {
+                    for block in md2pango(answer) {
+                        let label_model = Self::new_label(&block.string, false, block.is_code);
+                        answer_box.pack_start(&label_model, true, true, 0);
+                        answer_box.set_halign(gtk::Align::Start);
+                        answer_box.style_context().add_class("label-model");
+                    }
+                };
 
-            if chat["role"] == "user" {
-                let label_user = Self::new_label(answer, true, false);
-                answer_box.pack_start(&label_user, false, false, 0);
-                answer_box.set_halign(gtk::Align::End);
-                answer_box.style_context().add_class("label-user");
-            } else {
-                for block in md2pango(answer) {
-                    let label_model = Self::new_label(&block.string, false, block.is_code);
-                    answer_box.pack_start(&label_model, true, true, 0);
-                    answer_box.set_halign(gtk::Align::Start);
-                    answer_box.style_context().add_class("label-model");
-                }
-            };
-
-            chat_area.pack_start(&answer_box, false, false, 0);
+                chat_area.pack_start(&answer_box, false, false, 0);
+            }
+            true
+        } else {
+            false
         }
     }
 
