@@ -10,11 +10,13 @@ static ESC_PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
 
 static PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
     r"^\*[^\*](.*)" => r" • $1",
-    r"\*\*(.*)\*\*" => r"<b>$1</b>",
+    r"^&gt;(.*)" => r"<span foreground='#a6e3a1'>╏</span><span foreground='#aaa'> $1</span>",
+    r"\*\*(.*?)\*\*" => r"<b>$1</b>",
+    r"\*([^\*]+?)\*" => r"<i>$1</i>",
     r"\[(.*)\]\((.*)\)" => r"<a href='$2'>$1</a>",
-    r"#(.*)#" => r"<big>$1</big>",
-    r"##(.*)##" => r"<big><big>$1</big></big>",
-    r"###(.*)###" => r"<big><big><big>$1</big></big></big>",
+    r"^#(.*)" => r"<big>$1</big>",
+    r"^##(.*)" => r"<big><big>$1</big></big>",
+    r"^###(.*?)" => r"<big><big><big>$1</big></big></big>",
     r"`([^`]*)`" => "<span foreground='#bbb' background='#181825'><tt>$1</tt></span>",
 };
 
