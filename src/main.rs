@@ -1,6 +1,7 @@
 mod models;
 mod parser;
 
+use models::get_models;
 use parser::{cache::Cache, config::Config, md2pango::md2pango};
 
 use gdk::gio;
@@ -84,8 +85,9 @@ impl UI {
         let model_combobox = ComboBoxText::new();
         model_combobox.style_context().add_class("model-combobox");
         let model_list = ListStore::new(&[String::static_type()]);
-        model_list.set(&model_list.append(), &[(0, &"Gemini")]);
-        model_list.set(&model_list.append(), &[(0, &"Cohere")]);
+        for model in get_models(&config) {
+            model_list.set(&model_list.append(), &[(0, &model)]);
+        }
         model_combobox.set_model(Some(&model_list));
         model_combobox.set_active(Some(0));
 

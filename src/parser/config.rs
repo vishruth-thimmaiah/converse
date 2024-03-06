@@ -23,12 +23,16 @@ pub struct General {
 pub struct ConfigGemini {
     #[serde(default)]
     pub api: String,
+    #[serde(default)]
+    pub use_model: u32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ConfigCohere {
     #[serde(default)]
     pub api: String,
+    #[serde(default)]
+    pub use_model: u32,
     #[serde(default)]
     pub web_search: bool,
 }

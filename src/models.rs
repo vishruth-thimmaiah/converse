@@ -13,6 +13,21 @@ pub struct ChatContent {
     pub status: StatusCode,
 }
 
+pub fn get_models(config: &Config) -> Vec<String> {
+    let mut models = Vec::new();
+    models.push((config.gemini.use_model, "Gemini"));
+    models.push((config.cohere.use_model, "Cohere"));
+
+    // sort models by use_model and return as Vec<String>, where higher use_model is first.
+    models.sort_by(|a, b| b.0.cmp(&a.0));
+    let sorted_models: Vec<String> = models
+        .iter()
+        .filter_map(|(priority, model)| if priority != &0 { Some(model.to_string()) } else { None })
+        .collect();
+
+    sorted_models
+}
+
 pub async fn select_model(
     combobox_selection: &str,
     entry_text: &str,
