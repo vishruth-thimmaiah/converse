@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use serde_json::json;
 
-use crate::models::gemini::ChatContent;
+use crate::models::ChatContent;
 
 pub struct Cache {}
 
@@ -16,7 +16,7 @@ impl Cache {
         let cache_file = fs::read_to_string(path).expect("Could not read.");
 
         let response: serde_json::Value =
-            serde_json::from_str(&cache_file).unwrap_or(json!({"contents": []}));
+            serde_json::from_str(&cache_file).unwrap_or(json!({"chat": []}));
         response
     }
 
@@ -28,31 +28,21 @@ impl Cache {
         )
         .expect("Could not write.");
     }
-    pub fn update_conversation(response: &ChatContent) {
+    pub fn update_conversation(response: &ChatContent, model: &str) {
         let new_question = json!(
         {
             "role": "user",
-            "parts": [{
-                "text": response.question
-            }]
+            "text": response.question
         });
         let new_answer = json!(
         {
             "role": "model",
-            "parts": [{
-                "text": response.answer
-            }]
+            "text": response.answer
         });
 
         let mut conversation = Self::read();
-        conversation["contents"]
-            .as_array_mut()
-            .unwrap()
-            .push(new_question);
-        conversation["contents"]
-            .as_array_mut()
-            .unwrap()
-            .push(new_answer);
+        conversation["chat"].as_array_mut().unwrap().push(new_question);
+        conversation["chat"].as_array_mut().unwrap().push(new_answer);
 
         Self::write(conversation);
     }

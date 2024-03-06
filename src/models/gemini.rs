@@ -3,13 +3,9 @@ use serde_json::json;
 
 use crate::parser::{cache::Cache, config::ConfigGemini};
 
-pub struct Gemini {}
+use super::ChatContent;
 
-pub struct ChatContent {
-    pub question: String,
-    pub answer: String,
-    pub status: StatusCode,
-}
+pub struct Gemini {}
 
 const URL: &str =
     "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=";
@@ -17,18 +13,14 @@ const URL: &str =
 impl Gemini {
     pub async fn request(query: &str, config: ConfigGemini) -> Result<ChatContent, Error> {
         let url = format!("{}{}", URL, config.api);
-        let new_question = json!(
-        {
+        let mut conversation = Self::create_query();
+        conversation["contents"].as_array_mut().unwrap().push(json!(
+            {
             "role": "user",
             "parts": [{
                 "text": query
             }]
-        });
-        let mut conversation = Cache::read();
-        conversation["contents"]
-            .as_array_mut()
-            .unwrap()
-            .push(new_question);
+        }));
 
         let (response, status) = Self::send_request(&url, &conversation).await?;
         let result = Self::process_response(query, &response, status)?;
@@ -67,8 +59,25 @@ impl Gemini {
             status,
         };
         if status.is_success() {
-            Cache::update_conversation(&result);
+            Cache::update_conversation(&result, "gemini");
         }
         Ok(result)
+    }
+
+    fn create_query() -> serde_json::Value {
+        let mut template = json!({"contents": []});
+
+        for item in Cache::read()["chat"].as_array().unwrap() {
+            template["contents"].as_array_mut().unwrap().push(json!(
+                {
+                    "parts": [{
+                        "text": item["text"]
+                    }],
+                    "role": item["role"]
+                }
+            ))
+        }
+
+        template
     }
 }

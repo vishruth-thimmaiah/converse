@@ -1,10 +1,16 @@
 pub mod gemini;
 
-use reqwest::Error;
+use reqwest::{Error, StatusCode};
 
 use crate::parser::config::Config;
 
-use self::gemini::{ChatContent, Gemini};
+use self::gemini::Gemini;
+
+pub struct ChatContent {
+    pub question: String,
+    pub answer: String,
+    pub status: StatusCode,
+}
 
 pub async fn select_model(
     combobox_selection: &str,

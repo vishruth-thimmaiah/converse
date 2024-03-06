@@ -222,10 +222,10 @@ impl UI {
     }
 
     pub fn update(chat_area: &Box) -> bool {
-        let chats = &Cache::read()["contents"];
-        if chats != &json!([]) {
-            for chat in chats.as_array().unwrap() {
-                let answer = chat["parts"][0]["text"].as_str().unwrap();
+        let chats = &Cache::read();
+        if chats["chat"] != json!([]) {
+            for chat in chats["chat"].as_array().unwrap() {
+                let answer = chat["text"].as_str().unwrap();
                 let answer_box = Box::new(gtk::Orientation::Vertical, 0);
 
                 if chat["role"] == "user" {

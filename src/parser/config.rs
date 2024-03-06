@@ -4,8 +4,9 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct Config {
-    pub gemini: ConfigGemini,
     pub general: General,
+    pub gemini: ConfigGemini,
+    pub cohere: ConfigCohere,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -20,6 +21,12 @@ pub struct General {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct ConfigGemini {
+    #[serde(default)]
+    pub api: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ConfigCohere {
     #[serde(default)]
     pub api: String,
 }
