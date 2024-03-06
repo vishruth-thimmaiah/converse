@@ -1,10 +1,11 @@
 pub mod gemini;
+pub mod cohere;
 
 use reqwest::{Error, StatusCode};
 
 use crate::parser::config::Config;
 
-use self::gemini::Gemini;
+use self::{cohere::Cohere, gemini::Gemini};
 
 pub struct ChatContent {
     pub question: String,
@@ -19,7 +20,7 @@ pub async fn select_model(
 ) -> Result<ChatContent, Error> {
     match combobox_selection {
         "Gemini" => Gemini::request(&entry_text, config.gemini).await,
-        "Cohere" => unimplemented!(),
+        "Cohere" => Cohere::request(&entry_text, config.cohere).await,
         _ => unreachable!(),
     }
 }
