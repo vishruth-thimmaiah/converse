@@ -29,6 +29,8 @@ pub struct ConfigGemini {
 pub struct ConfigCohere {
     #[serde(default)]
     pub api: String,
+    #[serde(default)]
+    pub web_search: bool,
 }
 
 impl Config {
