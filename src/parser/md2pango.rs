@@ -1,6 +1,8 @@
 use phf::phf_map;
 use regex::Regex;
 
+use super::config::Config;
+
 static ESC_PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
     r"&([^gl]t;)|&" => r"&amp;$1",
     r"<!--.*-->" => r"",
@@ -10,14 +12,12 @@ static ESC_PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
 
 static PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
     r"^[-\*][^\*](.*)" => r" • $1",
-    r"^&gt;(.*)" => r"<span foreground='#a6e3a1'>╏</span><span foreground='#aaa'> $1</span>",
     r"\*\*(.*?)\*\*" => r"<b>$1</b>",
     r"[^\*]\*(.+?)\*[^\*]" => r"<i>$1</i>",
     r"\[(.*)\]\((.*)\)" => r"<a href='$2'>$1</a>",
     r"^#(.*)" => r"<big>$1</big>",
     r"^##(.*)" => r"<big><big>$1</big></big>",
     r"^###(.*?)" => r"<big><big><big>$1</big></big></big>",
-    r"`([^`]*)`" => "<span foreground='#bbb' background='#181825'><tt>$1</tt></span>",
 };
 
 #[derive(Debug)]
@@ -59,6 +59,29 @@ fn general_block_parse(block: &str) -> FormattedCode {
             let re = Regex::new(pattern.0).expect("error.");
             line_with_pango = re.replace_all(&line_with_pango, *pattern.1).to_string();
         }
+
+        let themes = Config::new().theming;
+
+        let re = Regex::new("^&gt;(.*)").expect("error.");
+        line_with_pango = re
+            .replace_all(
+                &line_with_pango,
+                format!(
+                    "<span foreground='{}'>╏</span><span foreground='{}'> $1</span>",
+                    themes.quote_indicator, themes.quote_foreground
+                ),
+            )
+            .to_string();
+        let re = Regex::new(r"`([^`]*)`").expect("error.");
+        line_with_pango = re
+            .replace_all(
+                &line_with_pango,
+                format!(
+                    "<span foreground='{}' background='{}'><tt>$1</tt></span>",
+                    themes.code_foreground, themes.code_background
+                ),
+            )
+            .to_string();
 
         pango_str.push_str(&line_with_pango);
         pango_str.push_str("\n");

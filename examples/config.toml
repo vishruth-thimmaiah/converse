@@ -1,0 +1,30 @@
+[general]
+# Use a layer to render the application.
+# only works on wayland compositors that support layers.
+use_gtk_layer = true
+
+# define the size of the appliction
+# works only when layer_shell is being used.
+layer_margin_top = 5
+layer_margin_bottom = 5
+layer_margin_left = 1300
+layer_margin_right = 5
+
+[theming]
+# Hex values for some text elements:
+quote_indicator = "#dddddd"
+quote_foreground = "#bbbbbb"
+code_background = "#11111b"
+code_foreground = "#eeeeee"
+
+[gemini]
+# Higher number get more priority when nothing is selected.
+# set value to 0 to disable
+use_model = 2
+api = ""
+
+
+[cohere]
+use_model = 1
+api = ""
+web_search = true

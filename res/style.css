@@ -44,3 +44,8 @@
 .truncate-chat {
 	margin: 5px;
 }
+
+
+.control-area {
+	background-color: @insensitive_base_color;
+}
