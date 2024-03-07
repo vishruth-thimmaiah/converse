@@ -59,7 +59,7 @@ impl Gemini {
             status,
         };
         if status.is_success() {
-            Cache::update_conversation(&result, "gemini");
+            Cache::update_conversation(&result, "Gemini");
         }
         Ok(result)
     }

@@ -41,6 +41,7 @@ impl Cache {
         });
 
         let mut conversation = Self::read();
+        conversation.as_object_mut().unwrap().entry("model").or_insert(json!(model));
         conversation["chat"].as_array_mut().unwrap().push(new_question);
         conversation["chat"].as_array_mut().unwrap().push(new_answer);
 

@@ -25,7 +25,6 @@ impl Cohere {
         data: &serde_json::Value,
         api: String,
     ) -> Result<(String, StatusCode), Error> {
-        println!("{data}");
         let response = Client::new()
             .post(url)
             .header("Authorization", format!("Bearer {}", api))
@@ -54,7 +53,7 @@ impl Cohere {
             status,
         };
         if status.is_success() {
-            Cache::update_conversation(&result, "cohere");
+            Cache::update_conversation(&result, "Cohere");
         }
         Ok(result)
     }

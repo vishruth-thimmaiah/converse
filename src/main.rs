@@ -123,7 +123,11 @@ impl UI {
         );
 
         let contains_history = Self::update(&chat_box_layout);
-        model_combobox.set_sensitive(!contains_history);
+        if let Some(model) = contains_history {
+            model_combobox.set_sensitive(false);
+            let index = get_models(&config).iter().position(|r| r == &model).unwrap_or_default();
+            model_combobox.set_active(Some(index as u32));
+        }
 
         let (sender, receiver) = async_channel::bounded(1);
 
@@ -223,7 +227,7 @@ impl UI {
         window.show_all();
     }
 
-    pub fn update(chat_area: &Box) -> bool {
+    pub fn update(chat_area: &Box) -> Option<String> {
         let chats = &Cache::read();
         if chats["chat"] != json!([]) {
             for chat in chats["chat"].as_array().unwrap() {
@@ -246,9 +250,9 @@ impl UI {
 
                 chat_area.pack_start(&answer_box, false, false, 0);
             }
-            true
+            Some(chats["model"].as_str()?.to_owned())
         } else {
-            false
+            None
         }
     }
 
