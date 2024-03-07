@@ -2,17 +2,17 @@ use phf::phf_map;
 use regex::Regex;
 
 static ESC_PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
-    // r"&" => r"&amp;",
+    r"&([^gl]t;)|&" => r"&amp;$1",
     r"<!--.*-->" => r"",
     r"<" => r"&lt;",
     r">" => r"&gt;"
 };
 
 static PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
-    r"^\*[^\*](.*)" => r" • $1",
+    r"^[-\*][^\*](.*)" => r" • $1",
     r"^&gt;(.*)" => r"<span foreground='#a6e3a1'>╏</span><span foreground='#aaa'> $1</span>",
     r"\*\*(.*?)\*\*" => r"<b>$1</b>",
-    r"\*([^\*]+?)\*" => r"<i>$1</i>",
+    r"[^\*]\*(.+?)\*[^\*]" => r"<i>$1</i>",
     r"\[(.*)\]\((.*)\)" => r"<a href='$2'>$1</a>",
     r"^#(.*)" => r"<big>$1</big>",
     r"^##(.*)" => r"<big><big>$1</big></big>",
