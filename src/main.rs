@@ -125,7 +125,10 @@ impl UI {
         let contains_history = Self::update(&chat_box_layout);
         if let Some(model) = contains_history {
             model_combobox.set_sensitive(false);
-            let index = get_models(&config).iter().position(|r| r == &model).unwrap_or_default();
+            let index = get_models(&config)
+                .iter()
+                .position(|r| r == &model)
+                .unwrap_or_default();
             model_combobox.set_active(Some(index as u32));
         }
 
@@ -264,12 +267,14 @@ impl UI {
             answer_label.set_justify(gtk::Justification::Right);
             answer_label.set_text(content);
         } else {
-            answer_label.set_justify(gtk::Justification::Fill);
+            answer_label.set_justify(gtk::Justification::Left);
             if is_code {
                 answer_label.set_text(content);
                 answer_label.style_context().add_class("label-model-code");
+                answer_label.set_halign(gtk::Align::Fill);
             } else {
                 answer_label.set_markup(content);
+                answer_label.set_halign(gtk::Align::Start);
             }
         }
         answer_label
