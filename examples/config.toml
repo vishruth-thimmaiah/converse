@@ -21,10 +21,10 @@ code_foreground = "#eeeeee"
 # Higher number get more priority when nothing is selected.
 # set value to 0 to disable
 use_model = 2
-api = ""
+api = "<https://aistudio.google.com/app/apikey>"
 
 
 [cohere]
 use_model = 1
-api = ""
+api = "<https://dashboard.cohere.com/api-keys>"
 web_search = true
