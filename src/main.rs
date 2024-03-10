@@ -285,7 +285,7 @@ impl UI {
 async fn main() {
     let config = Config::new();
     let app = Application::builder()
-        .application_id("org.gtk.converse")
+        .application_id("com.github.vishruth-thimmaiah.converse")
         .build();
 
     // only allows single instance of program.
