@@ -8,8 +8,7 @@ use gdk::gio;
 use gtk::{
     glib::{self, Propagation, *},
     prelude::*,
-    Application, ApplicationWindow, Box, Button, ComboBoxText, Entry, Label, ListStore,
-    ScrolledWindow,
+    Application, ApplicationWindow, Button, ComboBoxText, Entry, Label, ListStore, ScrolledWindow,
 };
 use gtk_layer_shell::{Edge, Layer, LayerShell};
 use serde_json::json;
@@ -65,7 +64,7 @@ impl UI {
             .hexpand(false)
             .build();
 
-        let chat_box_layout = Box::new(gtk::Orientation::Vertical, 0);
+        let chat_box_layout = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
         scroll.add(&chat_box_layout);
 
@@ -75,7 +74,7 @@ impl UI {
         let send_button = Button::builder().label("󱅥").build();
         send_button.style_context().add_class("send-button");
 
-        let entry_box_horizontal = Box::new(gtk::Orientation::Horizontal, 0);
+        let entry_box_horizontal = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         entry_box_horizontal.pack_start(&entry, true, true, 0);
         entry_box_horizontal.pack_start(&send_button, false, false, 0);
 
@@ -91,9 +90,9 @@ impl UI {
         model_combobox.set_model(Some(&model_list));
         model_combobox.set_active(Some(0));
 
-        let control_area = Box::new(gtk::Orientation::Vertical, 0);
+        let control_area = gtk::Box::new(gtk::Orientation::Vertical, 0);
         control_area.style_context().add_class("control-area");
-        let control_area_horizontal = Box::new(gtk::Orientation::Horizontal, 0);
+        let control_area_horizontal = gtk::Box::new(gtk::Orientation::Horizontal, 0);
 
         control_area.pack_start(&entry_box_horizontal, true, true, 0);
         control_area.pack_start(&control_area_horizontal, false, false, 0);
@@ -101,7 +100,7 @@ impl UI {
         control_area_horizontal.pack_start(&model_combobox, true, true, 0);
         control_area_horizontal.pack_start(&truncate_button, false, false, 0);
 
-        let main_box = Box::new(gtk::Orientation::Vertical, 0);
+        let main_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
         main_box.pack_start(&scroll, true, true, 0);
         main_box.pack_start(&control_area, false, false, 0);
 
@@ -172,7 +171,7 @@ impl UI {
 
                 if !entry_text.is_empty() {
 
-                    let answer_box = Box::new(gtk::Orientation::Vertical, 0);
+                    let answer_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
                     let new_question_label = Self::new_label(entry_text.as_str(), true, false);
 
@@ -213,11 +212,10 @@ impl UI {
                         "Could not connect to a server.".to_string()
                     };
 
-                    let answer_box = Box::new(gtk::Orientation::Vertical, 0);
+                    let answer_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
                     for block in md2pango(&label_content) {
-                        let label_model = Self::new_label(&block.string, false, block.is_code);
-                        answer_box.pack_start(&label_model, false, false, 0);
+                        Self::model_response_format(block, &answer_box);
                         answer_box.set_halign(gtk::Align::Start);
                         answer_box.style_context().add_class("label-model");
                     }
@@ -230,12 +228,12 @@ impl UI {
         window.show_all();
     }
 
-    pub fn update(chat_area: &Box) -> Option<String> {
+    pub fn update(chat_area: &gtk::Box) -> Option<String> {
         let chats = &Cache::read();
         if chats["chat"] != json!([]) {
             for chat in chats["chat"].as_array().unwrap() {
                 let answer = chat["text"].as_str().unwrap();
-                let answer_box = Box::new(gtk::Orientation::Vertical, 0);
+                let answer_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
                 if chat["role"] == "user" {
                     let label_user = Self::new_label(answer, true, false);
@@ -244,8 +242,7 @@ impl UI {
                     answer_box.style_context().add_class("label-user");
                 } else {
                     for block in md2pango(answer) {
-                        let label_model = Self::new_label(&block.string, false, block.is_code);
-                        answer_box.pack_start(&label_model, true, true, 0);
+                        Self::model_response_format(block, &answer_box);
                         answer_box.set_halign(gtk::Align::Start);
                         answer_box.style_context().add_class("label-model");
                     }
@@ -270,7 +267,6 @@ impl UI {
             answer_label.set_justify(gtk::Justification::Left);
             if is_code {
                 answer_label.set_text(content);
-                answer_label.style_context().add_class("label-model-code");
                 answer_label.set_halign(gtk::Align::Fill);
             } else {
                 answer_label.set_markup(content);
@@ -278,6 +274,32 @@ impl UI {
             }
         }
         answer_label
+    }
+    fn model_response_format(block: parser::md2pango::FormattedCode, answer_box: &gtk::Box) {
+        let label_model = Self::new_label(&block.string, false, block.is_code);
+        if block.is_code {
+            let copy_image =
+                gtk::Image::from_icon_name(Some("edit-copy-symbolic"), gtk::IconSize::Button);
+            let copy_button = Button::builder()
+                .image(&copy_image)
+                .halign(gtk::Align::End)
+                .tooltip_text("Copy")
+                .build();
+            let code_block = gtk::Box::new(gtk::Orientation::Vertical, 0);
+            copy_button.style_context().add_class("code-copy");
+            code_block.style_context().add_class("label-model-code");
+
+            code_block.add(&copy_button);
+            code_block.add(&label_model);
+            answer_box.pack_start(&code_block, true, true, 0);
+
+            copy_button.connect_clicked(move |_| {
+                let clipboard = gtk::Clipboard::get(&gdk::SELECTION_CLIPBOARD);
+                clipboard.set_text(&block.string);
+            });
+        } else {
+            answer_box.pack_start(&label_model, true, true, 0);
+        }
     }
 }
 
