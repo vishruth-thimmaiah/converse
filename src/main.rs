@@ -121,7 +121,7 @@ impl UI {
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
 
-        let contains_history = Self::update(&chat_box_layout);
+        let contains_history = Self::update(&chat_box_layout, &config);
         if let Some(model) = contains_history {
             model_combobox.set_sensitive(false);
             let index = get_models(&config)
@@ -163,9 +163,10 @@ impl UI {
             }),
         );
 
+        let config_clone = config.clone();
         send_button.connect_clicked(
             clone!(@weak entry, @weak chat_box_layout, @weak window => move |button| {
-                let gemini_config = config.clone();
+                let config_clone = config.clone();
                 let entry_text = entry.text();
                 let selected_model = model_combobox.active_text().unwrap().to_string();
 
@@ -188,7 +189,7 @@ impl UI {
                     window.show_all();
 
                     runtime().spawn(clone!(@strong sender => async move {
-                        let response = models::select_model(&selected_model, &entry_text, gemini_config).await;
+                        let response = models::select_model(&selected_model, &entry_text, config_clone).await;
                         sender.send(response).await.expect("The channel needs to be open.");
                     }));
                 }
@@ -214,7 +215,7 @@ impl UI {
 
                     let answer_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
-                    for block in md2pango(&label_content) {
+                    for block in md2pango(&label_content, &config_clone) {
                         Self::model_response_format(block, &answer_box);
                         answer_box.set_halign(gtk::Align::Start);
                         answer_box.style_context().add_class("label-model");
@@ -228,7 +229,7 @@ impl UI {
         window.show_all();
     }
 
-    pub fn update(chat_area: &gtk::Box) -> Option<String> {
+    pub fn update(chat_area: &gtk::Box, config: &Config) -> Option<String> {
         let chats = &Cache::read();
         if chats["chat"] != json!([]) {
             for chat in chats["chat"].as_array().unwrap() {
@@ -241,7 +242,7 @@ impl UI {
                     answer_box.set_halign(gtk::Align::End);
                     answer_box.style_context().add_class("label-user");
                 } else {
-                    for block in md2pango(answer) {
+                    for block in md2pango(answer, &config) {
                         Self::model_response_format(block, &answer_box);
                         answer_box.set_halign(gtk::Align::Start);
                         answer_box.style_context().add_class("label-model");

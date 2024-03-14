@@ -1,7 +1,7 @@
 use phf::phf_map;
 use regex::Regex;
 
-use super::config::Config;
+use super::config::{Config, Theming};
 
 static ESC_PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
     r"&([^gl]t;)|&" => r"&amp;$1",
@@ -26,26 +26,30 @@ pub struct FormattedCode {
     pub is_code: bool,
 }
 
-pub fn md2pango(input: &str) -> Vec<FormattedCode> {
+pub fn md2pango(input: &str, config: &Config) -> Vec<FormattedCode> {
     let mut final_block = Vec::new();
 
     let code_block_regex = Regex::new(r"```[\s\S]*?```").unwrap();
 
+    let themes = &config.theming;
     let mut last_end = 0;
     for code_block in code_block_regex.find_iter(&input) {
-        final_block.push(general_block_parse(&input[last_end..code_block.start()]));
+        final_block.push(general_block_parse(
+            &input[last_end..code_block.start()],
+            &themes,
+        ));
         final_block.push(code_block_parse(
             &input[code_block.start()..code_block.end()],
         ));
         last_end = code_block.end();
     }
 
-    final_block.push(general_block_parse(&input[last_end..]));
+    final_block.push(general_block_parse(&input[last_end..], &themes));
 
     final_block
 }
 
-fn general_block_parse(block: &str) -> FormattedCode {
+fn general_block_parse(block: &str, themes: &Theming) -> FormattedCode {
     let mut pango_str = String::new();
     for line in block.split("\n") {
         let mut line_with_pango = String::from(line);
@@ -59,8 +63,6 @@ fn general_block_parse(block: &str) -> FormattedCode {
             let re = Regex::new(pattern.0).expect("error.");
             line_with_pango = re.replace_all(&line_with_pango, *pattern.1).to_string();
         }
-
-        let themes = Config::new().theming;
 
         let re = Regex::new("^&gt;(.*)").expect("error.");
         line_with_pango = re
