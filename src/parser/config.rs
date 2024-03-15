@@ -3,26 +3,26 @@ use std::fs;
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct Config {
     pub general: General,
-    #[serde(default)]
     pub theming: Theming,
     pub gemini: ConfigGemini,
     pub cohere: ConfigCohere,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct Theming {
     pub quote_indicator: String,
     pub quote_foreground: String,
     pub code_background: String,
     pub code_foreground: String,
-
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct General {
-    #[serde(default)]
     pub use_gtk_layer: bool,
     pub layer_margin_top: i32,
     pub layer_margin_bottom: i32,
@@ -31,20 +31,17 @@ pub struct General {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct ConfigGemini {
-    #[serde(default)]
     pub api: String,
-    #[serde(default)]
     pub use_model: u32,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
 pub struct ConfigCohere {
-    #[serde(default)]
     pub api: String,
-    #[serde(default)]
     pub use_model: u32,
-    #[serde(default)]
     pub web_search: bool,
 }
 
@@ -59,14 +56,62 @@ impl Default for Theming {
     }
 }
 
+impl Default for General {
+    fn default() -> Self {
+        Self {
+            use_gtk_layer: false,
+            layer_margin_top: 0,
+            layer_margin_bottom: 0,
+            layer_margin_left: 0,
+            layer_margin_right: 0,
+        }
+    }
+}
+
+impl Default for ConfigGemini {
+    fn default() -> Self {
+        Self {
+            api: String::new(),
+            use_model: 2,
+        }
+    }
+}
+
+impl Default for ConfigCohere {
+    fn default() -> Self {
+        Self {
+            api: String::new(),
+            use_model: 1,
+            web_search: false,
+        }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            general: General::default(),
+            theming: Theming::default(),
+            gemini: ConfigGemini::default(),
+            cohere: ConfigCohere::default(),
+        }
+    }
+}
+
 impl Config {
     pub fn new() -> Config {
-        let toml_str =
-            fs::read_to_string(format!("{}/.config/converse/config.toml", env!("HOME")))
-                .unwrap_or_default();
+        let toml_str = fs::read_to_string(format!("{}/.config/converse/config.toml", env!("HOME")))
+            .unwrap_or_default();
 
         let config_file: Config =
             toml::from_str(&toml_str).expect("Failed to deserialize config.toml");
+
+        if config_file.gemini.use_model != 0 && config_file.gemini.api.is_empty() {
+            println!("Please set gemini api key in config.toml");
+        }
+        if config_file.cohere.use_model != 0 && config_file.cohere.api.is_empty() {
+            println!("Please set cohere api key in config.toml");
+        }
 
         config_file
     }
