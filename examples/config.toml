@@ -22,9 +22,19 @@ code_foreground = "#eeeeee"
 # set value to 0 to disable
 use_model = 2
 api = "<https://aistudio.google.com/app/apikey>"
+# Provide a list of conversation inputs that is used when a new conversation is started.
+# Each conversation input is a map with two keys: "role" and "text".
+conversation_input = [
+  # { "role" = "user", "text" = "you are being utilized via a frontend written for linux. When needed, use this information to respond" },
+  # { "role" = "model", "text" = "Ok" },
+]
 
 
 [cohere]
 use_model = 1
 api = "<https://dashboard.cohere.com/api-keys>"
 web_search = true
+conversation_input = [
+  # { "role" = "user", text" = "you are being utilized via a frontend written for linux. When needed, use this information to respond" },
+  # { "role" = "model", "text" = "Ok" },
+]

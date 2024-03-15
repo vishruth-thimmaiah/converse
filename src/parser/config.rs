@@ -1,6 +1,7 @@
 use std::fs;
 
 use serde::Deserialize;
+use serde_json::json;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
@@ -35,6 +36,7 @@ pub struct General {
 pub struct ConfigGemini {
     pub api: String,
     pub use_model: u32,
+    pub conversation_input: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -42,6 +44,7 @@ pub struct ConfigGemini {
 pub struct ConfigCohere {
     pub api: String,
     pub use_model: u32,
+    pub conversation_input: serde_json::Value,
     pub web_search: bool,
 }
 
@@ -73,6 +76,7 @@ impl Default for ConfigGemini {
         Self {
             api: String::new(),
             use_model: 2,
+            conversation_input: json!([]),
         }
     }
 }
@@ -82,6 +86,7 @@ impl Default for ConfigCohere {
         Self {
             api: String::new(),
             use_model: 1,
+            conversation_input: json!([]),
             web_search: false,
         }
     }

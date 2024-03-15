@@ -13,7 +13,7 @@ const URL: &str =
 impl Gemini {
     pub async fn request(query: &str, config: ConfigGemini) -> Result<ChatContent, Error> {
         let url = format!("{}{}", URL, config.api);
-        let mut conversation = Self::create_query();
+        let mut conversation = Self::create_query(config.conversation_input);
         conversation["contents"].as_array_mut().unwrap().push(json!(
             {
             "role": "user",
@@ -64,18 +64,21 @@ impl Gemini {
         Ok(result)
     }
 
-    fn create_query() -> serde_json::Value {
+    fn create_query(conversation_input: serde_json::Value) -> serde_json::Value {
         let mut template = json!({"contents": []});
 
+        for item in conversation_input.as_array().unwrap() {
+            template["contents"]
+                .as_array_mut()
+                .unwrap()
+                .push(json!({"role": item["role"], "parts": [{"text": item["text"]}]}));
+        }
+
         for item in Cache::read()["chat"].as_array().unwrap() {
-            template["contents"].as_array_mut().unwrap().push(json!(
-                {
-                    "parts": [{
-                        "text": item["text"]
-                    }],
-                    "role": item["role"]
-                }
-            ))
+            template["contents"]
+                .as_array_mut()
+                .unwrap()
+                .push(json!({"parts": [{"text": item["text"]}], "role": item["role"]}));
         }
 
         template
