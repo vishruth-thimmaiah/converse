@@ -21,6 +21,7 @@ code_foreground = "#eeeeee"
 # Higher number get more priority when nothing is selected.
 # set value to 0 to disable
 use_model = 2
+# Alternatively set $GEMINI_API_KEY in your shell.
 api = "<https://aistudio.google.com/app/apikey>"
 # Provide a list of conversation inputs that is used when a new conversation is started.
 # Each conversation input is a map with two keys: "role" and "text".
@@ -32,6 +33,7 @@ conversation_input = [
 
 [cohere]
 use_model = 1
+# Alternatively set $COHERE_API_KEY in your shell.
 api = "<https://dashboard.cohere.com/api-keys>"
 web_search = true
 conversation_input = [

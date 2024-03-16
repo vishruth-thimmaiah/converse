@@ -1,4 +1,4 @@
-use std::fs;
+use std::{env::var, fs};
 
 use serde::Deserialize;
 use serde_json::json;
@@ -74,7 +74,13 @@ impl Default for General {
 impl Default for ConfigGemini {
     fn default() -> Self {
         Self {
-            api: String::new(),
+            api: {
+                if let Ok(key) = var("GEMINI_API_KEY") {
+                    key
+                } else {
+                    String::new()
+                }
+            },
             use_model: 2,
             conversation_input: json!([]),
         }
@@ -84,7 +90,13 @@ impl Default for ConfigGemini {
 impl Default for ConfigCohere {
     fn default() -> Self {
         Self {
-            api: String::new(),
+            api: {
+                if let Ok(key) = var("COHERE_API_KEY") {
+                    key
+                } else {
+                    String::new()
+                }
+            },
             use_model: 1,
             conversation_input: json!([]),
             web_search: false,
