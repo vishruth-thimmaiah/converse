@@ -10,6 +10,7 @@ pub struct Config {
     pub theming: Theming,
     pub gemini: ConfigGemini,
     pub cohere: ConfigCohere,
+    pub claude: ConfigClaude,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -46,6 +47,17 @@ pub struct ConfigCohere {
     pub use_model: u32,
     pub conversation_input: serde_json::Value,
     pub web_search: bool,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+pub struct ConfigClaude {
+    pub api: String,
+    pub use_model: u32,
+    pub conversation_input: serde_json::Value,
+    pub max_tokens: u32,
+    pub model: String,
+    pub anthropic_version: String,
 }
 
 impl Default for Theming {
@@ -104,6 +116,25 @@ impl Default for ConfigCohere {
     }
 }
 
+impl Default for ConfigClaude {
+    fn default() -> Self {
+        Self {
+            api: {
+                if let Ok(key) = var("CLAUDE_API_KEY") {
+                    key
+                } else {
+                    String::new()
+                }
+            },
+            use_model: 1,
+            conversation_input: json!([]),
+            max_tokens: 1024,
+            model: "claude-3-haiku-20240307".to_string(),
+            anthropic_version: "2023-06-01".to_string(),
+        }
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -111,6 +142,7 @@ impl Default for Config {
             theming: Theming::default(),
             gemini: ConfigGemini::default(),
             cohere: ConfigCohere::default(),
+            claude: ConfigClaude::default(),
         }
     }
 }
