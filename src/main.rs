@@ -71,14 +71,18 @@ impl UI {
         let entry = Entry::builder().placeholder_text("Enter Text").build();
         entry.style_context().add_class("entry");
 
-        let send_button = Button::builder().label("󱅥").build();
+        let sent_icon =
+            gtk::Image::from_icon_name(Some("document-send-symbolic"), gtk::IconSize::Dnd);
+        let send_button = Button::builder().image(&sent_icon).build();
         send_button.style_context().add_class("send-button");
 
         let entry_box_horizontal = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         entry_box_horizontal.pack_start(&entry, true, true, 0);
         entry_box_horizontal.pack_start(&send_button, false, false, 0);
 
-        let truncate_button = Button::builder().label("󱅯").build();
+        let reset_icon =
+            gtk::Image::from_icon_name(Some("view-refresh-symbolic"), gtk::IconSize::Dnd);
+        let truncate_button = Button::builder().image(&reset_icon).build();
         truncate_button.style_context().add_class("truncate-chat");
 
         let model_combobox = ComboBoxText::new();
