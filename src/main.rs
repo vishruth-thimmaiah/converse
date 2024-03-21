@@ -135,6 +135,8 @@ impl UI {
             model_combobox.set_active(Some(index as u32));
         }
 
+        entry.grab_focus();
+
         let (sender, receiver) = async_channel::bounded(1);
 
         // Event Handlers.
