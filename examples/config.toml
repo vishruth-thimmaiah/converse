@@ -22,7 +22,7 @@ code_foreground = "#eeeeee"
 # set value to 0 to disable
 use_model = 2
 # Alternatively set $GEMINI_API_KEY in your shell.
-api = "<https://aistudio.google.com/app/apikey>"
+api = "" # https://aistudio.google.com/app/apikey
 # Provide a list of conversation inputs that is used when a new conversation is started.
 # Each conversation input is a map with two keys: "role" and "text".
 conversation_input = [
@@ -34,7 +34,7 @@ conversation_input = [
 [cohere]
 use_model = 1
 # Alternatively set $COHERE_API_KEY in your shell.
-api = "<https://dashboard.cohere.com/api-keys>"
+api = "" # https://dashboard.cohere.com/api-keys
 web_search = true
 conversation_input = [
   # { "role" = "user", text" = "you are being utilized via a frontend written for linux. When needed, use this information to respond" },
@@ -44,10 +44,20 @@ conversation_input = [
 [claude]
 use_model = 1
 # Alternatively set $CLAUDE_API_KEY in your shell.
-api = "<https://console.anthropic.com/settings/keys>"
+api = "" # https://console.anthropic.com/settings/keys
 model = "claude-3-haiku-20240307" # https://docs.anthropic.com/claude/docs/models-overview
 # anthropic_version = "2023-06-01"
 max_tokens = 1024
+conversation_input = [
+  # { "role" = "user", text" = "you are being utilized via a frontend written for linux. When needed, use this information to respond" },
+  # { "role" = "model", "text" = "Ok" },
+]
+
+[openai]
+use_model = 1
+# Alternatively set $OPENAI_API_KEY in your shell.
+api = "" # https://platform.openai.com/api-keys
+model = "gpt-3.5-turbo"
 conversation_input = [
   # { "role" = "user", text" = "you are being utilized via a frontend written for linux. When needed, use this information to respond" },
   # { "role" = "model", "text" = "Ok" },

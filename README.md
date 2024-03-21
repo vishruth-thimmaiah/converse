@@ -10,6 +10,7 @@ converse is a frontend for LLMs like Gemini written with GTK in Rust.
 * ### [Gemini](https://gemini.google.com)
 * ### [Claude](https://claude.ai)
 * ### [Cohere](https://cohere.com)
+* ### [OpenAI](https://chat.openai.com)
 
 ## Installation
 * ### Pacman 

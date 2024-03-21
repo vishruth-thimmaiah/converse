@@ -11,6 +11,7 @@ pub struct Config {
     pub gemini: ConfigGemini,
     pub cohere: ConfigCohere,
     pub claude: ConfigClaude,
+    pub openai: ConfigOpenAI,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -58,6 +59,15 @@ pub struct ConfigClaude {
     pub max_tokens: u32,
     pub model: String,
     pub anthropic_version: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(default)]
+pub struct ConfigOpenAI {
+    pub api: String,
+    pub use_model: u32,
+    pub conversation_input: serde_json::Value,
+    pub model: String,
 }
 
 impl Default for Theming {
@@ -135,6 +145,23 @@ impl Default for ConfigClaude {
     }
 }
 
+impl Default for ConfigOpenAI {
+    fn default() -> Self {
+        Self {
+            api: {
+                if let Ok(key) = var("OPENAI_API_KEY") {
+                    key
+                } else {
+                    String::new()
+                }
+            },
+            use_model: 1,
+            conversation_input: json!([]),
+            model: "gpt-3.5-turbo".to_string(),
+        }
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -143,6 +170,7 @@ impl Default for Config {
             gemini: ConfigGemini::default(),
             cohere: ConfigCohere::default(),
             claude: ConfigClaude::default(),
+            openai: ConfigOpenAI::default(),
         }
     }
 }
@@ -156,10 +184,16 @@ impl Config {
             toml::from_str(&toml_str).expect("Failed to deserialize config.toml");
 
         if config_file.gemini.use_model != 0 && config_file.gemini.api.is_empty() {
-            println!("Please set gemini api key in config.toml");
+            eprintln!("Please set gemini api key in config.toml");
         }
         if config_file.cohere.use_model != 0 && config_file.cohere.api.is_empty() {
-            println!("Please set cohere api key in config.toml");
+            eprintln!("Please set cohere api key in config.toml");
+        }
+        if config_file.claude.use_model != 0 && config_file.claude.api.is_empty() {
+            eprintln!("Please set claude api key in config.toml");
+        }
+        if config_file.openai.use_model != 0 && config_file.openai.api.is_empty() {
+            eprintln!("Please set openai api key in config.toml");
         }
 
         config_file

@@ -1,12 +1,13 @@
 pub mod claude;
 pub mod cohere;
 pub mod gemini;
+pub mod openai;
 
 use reqwest::{Error, StatusCode};
 
 use crate::parser::config::Config;
 
-use self::{claude::Claude, cohere::Cohere, gemini::Gemini};
+use self::{claude::Claude, cohere::Cohere, gemini::Gemini, openai::OpenAI};
 
 pub struct ChatContent {
     pub question: String,
@@ -19,6 +20,7 @@ pub fn get_models(config: &Config) -> Vec<String> {
     models.push((config.gemini.use_model, "Gemini"));
     models.push((config.cohere.use_model, "Cohere"));
     models.push((config.claude.use_model, "Claude"));
+    models.push((config.openai.use_model, "OpenAI"));
 
     // sort models by use_model and return as Vec<String>, where higher use_model is first.
     models.sort_by(|a, b| b.0.cmp(&a.0));
@@ -45,6 +47,7 @@ pub async fn select_model(
         "Gemini" => Gemini::request(&entry_text, config.gemini).await,
         "Cohere" => Cohere::request(&entry_text, config.cohere).await,
         "Claude" => Claude::request(&entry_text, config.claude).await,
+        "OpenAI" => OpenAI::request(&entry_text, config.openai).await,
         _ => unreachable!(),
     }
 }
