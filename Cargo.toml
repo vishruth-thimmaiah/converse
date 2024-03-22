@@ -2,7 +2,6 @@
 name = "converse"
 version = "0.1.0"
 edition = "2021"
-repository = "https://github.com/vishruth-thimmaiah/converse"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,21 +25,3 @@ lto = true
 codegen-units = 1
 panic = 'abort'
 strip = true
-
-# The profile that 'cargo dist' will build with
-[profile.dist]
-inherits = "release"
-lto = "thin"
-
-# Config for 'cargo dist'
-[workspace.metadata.dist]
-# The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.11.1"
-# CI backends to support
-ci = ["github"]
-# The installers to generate for each app
-installers = ["shell"]
-# Target platforms to build apps for (Rust target-triple syntax)
-targets = ["x86_64-unknown-linux-gnu"]
-# Publish jobs to run in CI
-pr-run-mode = "plan"
