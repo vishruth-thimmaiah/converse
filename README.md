@@ -19,7 +19,7 @@ converse is a frontend for LLMs like Gemini written with GTK in Rust.
     ```
 * ### Apt
     ```bash
-    sudo apt install gtk-layer-shell cargo git gtk
+    sudo apt install cargo git libgtk-3-dev libgtk-layer-shell-dev
     ```
 
 ### Cloning and Building
