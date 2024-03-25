@@ -17,6 +17,11 @@ converse is a frontend for LLMs like Gemini written with GTK in Rust.
     ```bash
     sudo pacman -S gtk3 cargo git gtk-layer-shell
     ```
+* ### Aur
+    Using paru as an Aur helper,
+    ```bash
+    paru -S converse-git
+    ```
 * ### Apt
     ```bash
     sudo apt install cargo git libgtk-3-dev libgtk-layer-shell-dev
