@@ -1,34 +1,33 @@
-use std::{fs, path::Path};
+use std::{
+    fs::{self},
+    path::PathBuf,
+};
 
 use serde_json::json;
 
 use crate::models::ChatContent;
 
+pub const PATH: &str = concat!(env!("HOME"), "/.cache/converse");
+
 pub struct Cache {}
 
 impl Cache {
-    pub fn read() -> serde_json::Value {
-        let path: String = format!("{}/.cache/converse/chat_history", env!("HOME"));
-        if !Path::new(&path).exists() {
-            let _ = fs::create_dir(format!("{}/.cache/converse", env!("HOME")));
-            let _ = fs::File::create(path.clone());
-        };
-        let cache_file = fs::read_to_string(path).expect("Could not read.");
-
-        let response: serde_json::Value =
-            serde_json::from_str(&cache_file).unwrap_or(json!({"chat": []}));
-        response
+    pub fn read(path: PathBuf) -> serde_json::Value {
+        if let Ok(cache_file) = fs::read_to_string(path) {
+            let response: serde_json::Value =
+                serde_json::from_str(&cache_file).unwrap_or(json!({"chat": []}));
+            response
+        } else {
+            json!({"chat": []})
+        }
     }
 
-    fn write(response: serde_json::Value) {
+    fn write(path: PathBuf, response: serde_json::Value) {
+        fs::create_dir(PATH).ok();
         let cache_file = serde_json::to_string(&response).expect("Could not Serialize");
-        fs::write(
-            format!("{}/.cache/converse/chat_history", env!("HOME")),
-            cache_file,
-        )
-        .expect("Could not write.");
+        fs::write(path, cache_file).expect("Could not write.");
     }
-    pub fn update_conversation(response: &ChatContent, model: &str) {
+    pub fn update_conversation(file: PathBuf, response: &ChatContent, model: &str) {
         let new_question = json!(
         {
             "role": "user",
@@ -40,7 +39,7 @@ impl Cache {
             "text": response.answer
         });
 
-        let mut conversation = Self::read();
+        let mut conversation = Self::read(file.clone());
         conversation
             .as_object_mut()
             .unwrap()
@@ -55,11 +54,17 @@ impl Cache {
             .unwrap()
             .push(new_answer);
 
-        Self::write(conversation);
+        Self::write(file, conversation);
     }
-    pub fn truncate() {
-        let path: String = format!("{}/.cache/converse/chat_history", env!("HOME"));
-        let file = fs::File::create(path).unwrap();
-        let _ = file.set_len(0);
+
+    pub fn read_all() -> Vec<PathBuf> {
+        let mut dir_files = Vec::new();
+        if let Ok(files) = fs::read_dir(PATH) {
+            for file in files {
+                dir_files.push(file.expect("Error reading file").path())
+            }
+        }
+        dir_files.sort();
+        dir_files
     }
 }

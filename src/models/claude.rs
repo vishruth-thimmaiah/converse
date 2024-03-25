@@ -1,7 +1,7 @@
 use reqwest::{Client, Error, StatusCode};
 use serde_json::json;
 
-use crate::parser::{cache::Cache, config::ConfigClaude};
+use crate::parser::config::ConfigClaude;
 
 use super::ChatContent;
 
@@ -10,10 +10,18 @@ pub struct Claude {}
 const URL: &'static str = "https://api.anthropic.com/v1/messages";
 
 impl Claude {
-    pub async fn request(query: &str, config: ConfigClaude) -> Result<ChatContent, Error> {
+    pub async fn request(
+        query: &str,
+        config: ConfigClaude,
+        init_input: &serde_json::Value,
+    ) -> Result<ChatContent, Error> {
         let url = format!("{}", URL);
-        let mut conversation =
-            Self::create_query(config.max_tokens, config.model, config.conversation_input);
+        let mut conversation = Self::create_query(
+            config.max_tokens,
+            config.model,
+            config.conversation_input,
+            init_input,
+        );
 
         conversation["messages"]
             .as_array_mut()
@@ -60,9 +68,6 @@ impl Claude {
             answer: answer.to_string(),
             status,
         };
-        if status.is_success() {
-            Cache::update_conversation(&result, "Claude");
-        }
         Ok(result)
     }
 
@@ -70,6 +75,7 @@ impl Claude {
         tokens: u32,
         model: String,
         conversation_input: serde_json::Value,
+        init_input: &serde_json::Value,
     ) -> serde_json::Value {
         let mut template = json!({"model": model, "max_tokens": tokens, "messages": []});
 
@@ -80,7 +86,7 @@ impl Claude {
                 .push(json!({ "role": item["role"].as_str().unwrap().replace("model", "assistant"), "content": item["text"]}))
         }
 
-        for item in Cache::read()["chat"].as_array().unwrap() {
+        for item in init_input.as_array().unwrap() {
             template["messages"]
                 .as_array_mut()
                 .unwrap()

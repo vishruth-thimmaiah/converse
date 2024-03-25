@@ -3,9 +3,11 @@ pub mod cohere;
 pub mod gemini;
 pub mod openai;
 
+use std::path::PathBuf;
+
 use reqwest::{Error, StatusCode};
 
-use crate::parser::config::Config;
+use crate::parser::{cache::Cache, config::Config};
 
 use self::{claude::Claude, cohere::Cohere, gemini::Gemini, openai::OpenAI};
 
@@ -42,12 +44,20 @@ pub async fn select_model(
     combobox_selection: &str,
     entry_text: &str,
     config: Config,
+    file: PathBuf,
 ) -> Result<ChatContent, Error> {
-    match combobox_selection {
-        "Gemini" => Gemini::request(&entry_text, config.gemini).await,
-        "Cohere" => Cohere::request(&entry_text, config.cohere).await,
-        "Claude" => Claude::request(&entry_text, config.claude).await,
-        "OpenAI" => OpenAI::request(&entry_text, config.openai).await,
+    let init_input = Cache::read(file.clone());
+    let result = match combobox_selection {
+        "Gemini" => Gemini::request(&entry_text, config.gemini, &init_input["chat"]).await,
+        "Cohere" => Cohere::request(&entry_text, config.cohere, &init_input["chat"]).await,
+        "Claude" => Claude::request(&entry_text, config.claude, &init_input["chat"]).await,
+        "OpenAI" => OpenAI::request(&entry_text, config.openai, &init_input["chat"]).await,
         _ => unreachable!(),
+    };
+    if let Ok(output) = &result {
+        if output.status.is_success() {
+            Cache::update_conversation(file, output, combobox_selection);
+        }
     }
+    result
 }

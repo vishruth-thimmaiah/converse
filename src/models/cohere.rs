@@ -1,7 +1,7 @@
 use reqwest::{Client, Error, StatusCode};
 use serde_json::json;
 
-use crate::parser::{cache::Cache, config::ConfigCohere};
+use crate::parser::config::ConfigCohere;
 
 use super::ChatContent;
 
@@ -10,9 +10,14 @@ pub struct Cohere {}
 const URL: &'static str = "https://api.cohere.ai/v1/chat";
 
 impl Cohere {
-    pub async fn request(query: &str, config: ConfigCohere) -> Result<ChatContent, Error> {
+    pub async fn request(
+        query: &str,
+        config: ConfigCohere,
+        init_input: &serde_json::Value,
+    ) -> Result<ChatContent, Error> {
         let url = format!("{}", URL);
-        let mut conversation = Self::create_query(config.web_search, config.conversation_input);
+        let mut conversation =
+            Self::create_query(config.web_search, config.conversation_input, init_input);
         conversation.as_object_mut().unwrap().insert(
             "message".to_string(),
             serde_json::Value::String(query.to_string()),
@@ -55,13 +60,14 @@ impl Cohere {
             answer: answer.to_string(),
             status,
         };
-        if status.is_success() {
-            Cache::update_conversation(&result, "Cohere");
-        }
         Ok(result)
     }
 
-    fn create_query(web_search: bool, conversation_input: serde_json::Value) -> serde_json::Value {
+    fn create_query(
+        web_search: bool,
+        conversation_input: serde_json::Value,
+        init_input: &serde_json::Value,
+    ) -> serde_json::Value {
         let mut template = if web_search {
             json!({"chat_history": [], "connectors": [{"id": "web-search"}]})
         } else {
@@ -75,7 +81,7 @@ impl Cohere {
                 .push(json!({ "role": item["role"], "message": item["text"]}))
         }
 
-        for item in Cache::read()["chat"].as_array().unwrap() {
+        for item in init_input.as_array().unwrap() {
             template["chat_history"]
                 .as_array_mut()
                 .unwrap()
