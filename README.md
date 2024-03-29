@@ -50,6 +50,7 @@ cargo build --release
 Create a file ~/.config/converse/style.css. CSS can be used to modify the appearance of the applicaion.
 #### CSS Classes
 * **main-window**: The main parent window.
+* **tab-page**: The notebook widget containing the scrollable region.
 * **label-model**: The label that shows non code responses from the LLM.
 * **label-model-code**: The label that shows code responses from the LLM.
 * **label-user**: The label that shows user prompts from the LLM.

@@ -2,6 +2,11 @@
 	border-radius: 10px;
 }
 
+.tab-page {
+	background: none;
+	border: none;
+}
+
 .label-model {
 	background-color: @insensitive_base_color;
 	font-size: 17px;
