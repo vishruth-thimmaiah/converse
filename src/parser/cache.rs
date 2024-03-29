@@ -12,7 +12,7 @@ pub const PATH: &str = concat!(env!("HOME"), "/.cache/converse");
 pub struct Cache {}
 
 impl Cache {
-    pub fn read(path: PathBuf) -> serde_json::Value {
+    pub fn read(path: &PathBuf) -> serde_json::Value {
         if let Ok(cache_file) = fs::read_to_string(path) {
             let response: serde_json::Value =
                 serde_json::from_str(&cache_file).unwrap_or(json!({"chat": []}));
@@ -39,7 +39,7 @@ impl Cache {
             "text": response.answer
         });
 
-        let mut conversation = Self::read(file.clone());
+        let mut conversation = Self::read(&file);
         conversation
             .as_object_mut()
             .unwrap()

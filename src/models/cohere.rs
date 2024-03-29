@@ -12,18 +12,18 @@ const URL: &'static str = "https://api.cohere.ai/v1/chat";
 impl Cohere {
     pub async fn request(
         query: &str,
-        config: ConfigCohere,
+        config: &ConfigCohere,
         init_input: &serde_json::Value,
     ) -> Result<ChatContent, Error> {
         let url = format!("{}", URL);
         let mut conversation =
-            Self::create_query(config.web_search, config.conversation_input, init_input);
+            Self::create_query(config.web_search, &config.conversation_input, init_input);
         conversation.as_object_mut().unwrap().insert(
             "message".to_string(),
             serde_json::Value::String(query.to_string()),
         );
 
-        let (response, status) = Self::send_request(&url, &conversation, config.api).await?;
+        let (response, status) = Self::send_request(&url, &conversation, &config.api).await?;
         let result = Self::process_response(query, &response, status)?;
 
         Ok(result)
@@ -31,7 +31,7 @@ impl Cohere {
     async fn send_request(
         url: &str,
         data: &serde_json::Value,
-        api: String,
+        api: &str,
     ) -> Result<(String, StatusCode), Error> {
         let response = Client::new()
             .post(url)
@@ -65,7 +65,7 @@ impl Cohere {
 
     fn create_query(
         web_search: bool,
-        conversation_input: serde_json::Value,
+        conversation_input: &serde_json::Value,
         init_input: &serde_json::Value,
     ) -> serde_json::Value {
         let mut template = if web_search {

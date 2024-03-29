@@ -12,14 +12,14 @@ const URL: &'static str = "https://api.anthropic.com/v1/messages";
 impl Claude {
     pub async fn request(
         query: &str,
-        config: ConfigClaude,
+        config: &ConfigClaude,
         init_input: &serde_json::Value,
     ) -> Result<ChatContent, Error> {
         let url = format!("{}", URL);
         let mut conversation = Self::create_query(
             config.max_tokens,
-            config.model,
-            config.conversation_input,
+            &config.model,
+            &config.conversation_input,
             init_input,
         );
 
@@ -29,7 +29,7 @@ impl Claude {
             .push(json!({ "role": "user", "content": query }));
 
         let (response, status) =
-            Self::send_request(&url, &conversation, config.api, config.anthropic_version).await?;
+            Self::send_request(&url, &conversation, &config.api, &config.anthropic_version).await?;
         let result = Self::process_response(query, &response, status)?;
 
         Ok(result)
@@ -37,8 +37,8 @@ impl Claude {
     async fn send_request(
         url: &str,
         data: &serde_json::Value,
-        api: String,
-        anthropic_version: String,
+        api: &str,
+        anthropic_version: &str,
     ) -> Result<(String, StatusCode), Error> {
         let response = Client::new()
             .post(url)
@@ -73,8 +73,8 @@ impl Claude {
 
     fn create_query(
         tokens: u32,
-        model: String,
-        conversation_input: serde_json::Value,
+        model: &str,
+        conversation_input: &serde_json::Value,
         init_input: &serde_json::Value,
     ) -> serde_json::Value {
         let mut template = json!({"model": model, "max_tokens": tokens, "messages": []});

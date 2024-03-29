@@ -3,7 +3,7 @@ pub mod cohere;
 pub mod gemini;
 pub mod openai;
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use reqwest::{Error, StatusCode};
 
@@ -17,7 +17,7 @@ pub struct ChatContent {
     pub status: StatusCode,
 }
 
-pub fn get_models(config: &Config) -> Vec<String> {
+pub fn get_models(config: &Arc<Config>) -> Vec<String> {
     let mut models = Vec::new();
     models.push((config.gemini.use_model, "Gemini"));
     models.push((config.cohere.use_model, "Cohere"));
@@ -43,15 +43,15 @@ pub fn get_models(config: &Config) -> Vec<String> {
 pub async fn select_model(
     combobox_selection: &str,
     entry_text: &str,
-    config: Config,
+    config: Arc<Config>,
     file: PathBuf,
 ) -> Result<ChatContent, Error> {
-    let init_input = Cache::read(file.clone());
+    let init_input = Cache::read(&file);
     let result = match combobox_selection {
-        "Gemini" => Gemini::request(&entry_text, config.gemini, &init_input["chat"]).await,
-        "Cohere" => Cohere::request(&entry_text, config.cohere, &init_input["chat"]).await,
-        "Claude" => Claude::request(&entry_text, config.claude, &init_input["chat"]).await,
-        "OpenAI" => OpenAI::request(&entry_text, config.openai, &init_input["chat"]).await,
+        "Gemini" => Gemini::request(&entry_text, &config.gemini, &init_input["chat"]).await,
+        "Cohere" => Cohere::request(&entry_text, &config.cohere, &init_input["chat"]).await,
+        "Claude" => Claude::request(&entry_text, &config.claude, &init_input["chat"]).await,
+        "OpenAI" => OpenAI::request(&entry_text, &config.openai, &init_input["chat"]).await,
         _ => unreachable!(),
     };
     if let Ok(output) = &result {

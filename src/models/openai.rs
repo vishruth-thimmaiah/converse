@@ -12,17 +12,17 @@ const URL: &str = "https://api.openai.com/v1/chat/completions";
 impl OpenAI {
     pub async fn request(
         query: &str,
-        config: ConfigOpenAI,
+        config: &ConfigOpenAI,
         init_input: &serde_json::Value,
     ) -> Result<ChatContent, Error> {
         let mut conversation =
-            Self::create_query(config.conversation_input, config.model, init_input);
+            Self::create_query(&config.conversation_input, &config.model, init_input);
         conversation["messages"]
             .as_array_mut()
             .unwrap()
             .push(json!({ "role": "user", "content": query }));
 
-        let (response, status) = Self::send_request(URL, config.api, &conversation).await?;
+        let (response, status) = Self::send_request(URL, &config.api, &conversation).await?;
         let result = Self::process_response(query, &response, status)?;
 
         Ok(result)
@@ -30,7 +30,7 @@ impl OpenAI {
 
     async fn send_request(
         url: &str,
-        api: String,
+        api: &str,
         data: &serde_json::Value,
     ) -> Result<(String, StatusCode), Error> {
         let response = Client::new()
@@ -64,8 +64,8 @@ impl OpenAI {
     }
 
     fn create_query(
-        conversation_input: serde_json::Value,
-        model: String,
+        conversation_input: &serde_json::Value,
+        model: &str,
         init_input: &serde_json::Value,
     ) -> serde_json::Value {
         let mut template = json!({"model": model, "messages": []});

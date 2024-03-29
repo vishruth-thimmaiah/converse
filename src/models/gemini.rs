@@ -13,11 +13,11 @@ const URL: &str =
 impl Gemini {
     pub async fn request(
         query: &str,
-        config: ConfigGemini,
+        config: &ConfigGemini,
         init_input: &serde_json::Value,
     ) -> Result<ChatContent, Error> {
         let url = format!("{}{}", URL, config.api);
-        let mut conversation = Self::create_query(config.conversation_input, &init_input);
+        let mut conversation = Self::create_query(&config.conversation_input, &init_input);
         conversation["contents"].as_array_mut().unwrap().push(json!(
             {
             "role": "user",
@@ -66,7 +66,7 @@ impl Gemini {
     }
 
     fn create_query(
-        conversation_input: serde_json::Value,
+        conversation_input: &serde_json::Value,
         init_input: &serde_json::Value,
     ) -> serde_json::Value {
         let mut template = json!({"contents": []});

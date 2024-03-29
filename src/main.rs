@@ -16,7 +16,14 @@ use gtk::{
 };
 use gtk_layer_shell::{Edge, Layer, LayerShell};
 use serde_json::json;
-use std::{cell::RefCell, fs, path::PathBuf, rc::Rc, sync::OnceLock, usize};
+use std::{
+    cell::RefCell,
+    fs,
+    path::PathBuf,
+    rc::Rc,
+    sync::{Arc, OnceLock},
+    usize,
+};
 use tokio::runtime::Runtime;
 
 fn runtime() -> &'static Runtime {
@@ -49,7 +56,7 @@ struct UI {
 }
 
 impl UI {
-    fn build_ui(app: &Application, config: Config) {
+    fn build_ui(app: &Application, config: &Arc<Config>) {
         let ui = Rc::new(RefCell::new(UI {
             tabs: Vec::new(),
             tab_count: 0,
@@ -67,25 +74,21 @@ impl UI {
             window.set_keyboard_interactivity(true);
             window.auto_exclusive_zone_enable();
 
-            window.set_layer_shell_margin(Edge::Left, config.general.layer_margin_left);
-            window.set_layer_shell_margin(Edge::Right, config.general.layer_margin_right);
-            window.set_layer_shell_margin(Edge::Top, config.general.layer_margin_top);
-            window.set_layer_shell_margin(Edge::Bottom, config.general.layer_margin_bottom);
-
             window.set_layer(Layer::Overlay);
         }
 
         window.style_context().add_class("main-window");
 
         let anchors = [
-            (Edge::Left, true),
-            (Edge::Right, true),
-            (Edge::Top, true),
-            (Edge::Bottom, true),
+            (Edge::Left, true, config.general.layer_margin_left),
+            (Edge::Right, true, config.general.layer_margin_right),
+            (Edge::Top, true, config.general.layer_margin_top),
+            (Edge::Bottom, true, config.general.layer_margin_bottom),
         ];
 
-        for (anchor, state) in anchors {
+        for (anchor, state, margin_size) in anchors {
             window.set_anchor(anchor, state);
+            window.set_layer_shell_margin(anchor, margin_size);
         }
 
         // Main UI layout
@@ -135,8 +138,6 @@ impl UI {
         main_box.pack_start(&notebook, true, true, 0);
         main_box.pack_start(&control_area, false, false, 0);
 
-        let ui_clone = Rc::clone(&ui);
-
         window.add(&main_box);
 
         let provider = gtk::CssProvider::new();
@@ -161,10 +162,7 @@ impl UI {
         // Event Handlers.
 
         // Key bindings
-        let send_button_clone = send_button.clone();
-        let notebook_clone = notebook.clone();
-        let entry_clone = entry.clone();
-        window.connect_key_press_event(move |window, event| {
+        window.connect_key_press_event(clone!(@weak send_button, @weak notebook, @weak entry, @weak ui => @default-return Propagation::Proceed, move |window, event| {
             let modifier = if event.state().is_empty() {
                 None
             } else {
@@ -177,7 +175,7 @@ impl UI {
                 }
 
                 (keys::Return, None) => {
-                    send_button_clone.emit_clicked();
+                    send_button.emit_clicked();
                     Propagation::Stop
                 }
 
@@ -190,28 +188,28 @@ impl UI {
                 | (keys::_7, Some(ModifierType::MOD1_MASK))
                 | (keys::_8, Some(ModifierType::MOD1_MASK))
                 | (keys::_9, Some(ModifierType::MOD1_MASK)) => {
-                    notebook_clone.set_current_page(Some(
+                    notebook.set_current_page(Some(
                         event.keyval().name().unwrap().parse::<u32>().unwrap() - 1,
                     ));
                     Propagation::Stop
                 }
 
                 (keys::l, Some(ModifierType::CONTROL_MASK)) => {
-                    entry_clone.grab_focus();
+                    entry.grab_focus();
                     Propagation::Stop
                 }
 
                 (keys::t, Some(ModifierType::CONTROL_MASK)) => {
-                    Self::new_page(&ui_clone, &notebook_clone, None);
+                    Self::new_page(&ui, &notebook, None);
                     Propagation::Stop
                 }
 
                 (keys::w, Some(ModifierType::CONTROL_MASK)) => {
-                    if let Some(page_num) = notebook_clone.current_page() {
-                        notebook_clone.remove_page(Some(page_num));
-                        fs::remove_file(ui_clone.borrow().tabs[page_num as usize].file.clone())
+                    if let Some(page_num) = notebook.current_page() {
+                        notebook.remove_page(Some(page_num));
+                        fs::remove_file(ui.borrow().tabs[page_num as usize].file.clone())
                             .ok();
-                        ui_clone.borrow_mut().tabs.remove(page_num as usize);
+                        ui.borrow_mut().tabs.remove(page_num as usize);
                     };
                     Propagation::Stop
                 }
@@ -220,21 +218,20 @@ impl UI {
             };
             window.show_all();
             state
-        });
-
-        // Adds another tab.
-        let ui_clone = Rc::clone(&ui);
-        add_tab_button.connect_clicked(clone!( @weak notebook, @weak model_combobox => move |_| {
-            Self::new_page(&ui_clone, &notebook, None);
-            notebook.show_all();
         }));
 
+        // Adds another tab.
+        add_tab_button.connect_clicked(
+            clone!( @weak notebook, @weak model_combobox, @weak ui => move |_| {
+                Self::new_page(&ui, &notebook, None);
+                notebook.show_all();
+            }),
+        );
+
         // Sends responses.
-        let ui_clone = Rc::clone(&ui);
-        let config_clone = config.clone();
         send_button.connect_clicked(
-            clone!(@weak entry, @weak notebook, @weak window, @weak model_combobox => move |button| {
-                let config_clone = config_clone.clone();
+            clone!(@weak entry, @weak notebook, @weak window, @weak model_combobox, @weak ui, @strong config => move |button| {
+                let config = config.clone();
                 let entry_text = entry.text();
                 let selected_model = model_combobox.active_text().unwrap().to_string();
 
@@ -250,11 +247,11 @@ impl UI {
 
 
                     let page_number = notebook.current_page().unwrap_or_else(|| {
-                        Self::new_page(&ui_clone, &notebook, None);
+                        Self::new_page(&ui, &notebook, None);
                         0
                     });
-                    ui_clone.borrow_mut().tabs[page_number as usize].model = Some(selected_model.clone());
-                    let current_page = &ui_clone.borrow().tabs[page_number as usize ];
+                    ui.borrow_mut().tabs[page_number as usize].model = Some(selected_model.clone());
+                    let current_page = &ui.borrow().tabs[page_number as usize ];
                     current_page.tab.pack_start(&answer_box, false, false, 0);
                     let current_page_id = current_page.id.clone();
                     let file = current_page.clone().file;
@@ -265,7 +262,7 @@ impl UI {
                     window.show_all();
 
                     runtime().spawn(clone!(@strong sender => async move {
-                        let response = models::select_model(&selected_model, &entry_text, config_clone, file).await;
+                        let response = models::select_model(&selected_model, &entry_text, config, file).await;
                         sender.send((response, current_page_id)).await.expect("The channel needs to be open.");
                     }));
                 }
@@ -273,31 +270,29 @@ impl UI {
         );
 
         // Handles tab switching.
-        let config_clone = config.clone();
-        let ui_clone = Rc::clone(&ui);
-        let inhibit_notebook = notebook.connect_switch_page(move |notebook, _, page| {
-            if notebook.children().len() != 0 {
-                if let Some(file) = &ui_clone.borrow().tabs.get(page as usize) {
-                    if let Some(model) = file.model.clone() {
-                        let index = get_models(&config_clone)
-                            .iter()
-                            .position(|r| r == &model)
-                            .unwrap_or_default();
-                        model_combobox.set_active(Some(index as u32));
-                        model_combobox.set_sensitive(false);
-                    } else {
-                        model_combobox.set_active(Some(0));
-                        model_combobox.set_sensitive(true);
+        let inhibit_notebook = notebook.connect_switch_page(
+            clone!(@weak ui, @weak config => move |notebook, _, page| {
+                if notebook.children().len() != 0 {
+                    if let Some(file) = &ui.borrow().tabs.get(page as usize) {
+                        if let Some(model) = file.model.clone() {
+                            let index = get_models(&config)
+                                .iter()
+                                .position(|r| r == &model)
+                                .unwrap_or_default();
+                            model_combobox.set_active(Some(index as u32));
+                            model_combobox.set_sensitive(false);
+                        } else {
+                            model_combobox.set_active(Some(0));
+                            model_combobox.set_sensitive(true);
+                        }
                     }
                 }
-            }
-        });
+            }),
+        );
 
         // Handles the api call to the llm and adds Label widget.
-        let ui_clone = Rc::clone(&ui);
-        let config_clone = config.clone();
         glib::spawn_future_local(
-            clone!(@weak notebook, @weak window, @weak entry => async move {
+            clone!(@weak notebook, @weak window, @weak entry, @weak ui, @weak config => async move {
                 while let Ok((response, current_page_id)) = receiver.recv().await {
                     entry.set_sensitive(true);
                     send_button.set_sensitive(true);
@@ -314,12 +309,12 @@ impl UI {
 
                     let answer_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
 
-                    for block in md2pango(&label_content, &config_clone) {
+                    for block in md2pango(&label_content, &config) {
                         Self::model_response_format(block, &answer_box);
                         answer_box.set_halign(gtk::Align::Start);
                         answer_box.style_context().add_class("label-model");
                     }
-                    if let Some(tab) = Tabs::get_tab_from_id(current_page_id, &ui_clone.borrow().tabs) {
+                    if let Some(tab) = Tabs::get_tab_from_id(current_page_id, &ui.borrow().tabs) {
                         tab.pack_start(&answer_box, false, false, 0);
                     }
                     window.show_all();
@@ -327,21 +322,13 @@ impl UI {
             }),
         );
 
-        let config_clone = config.clone();
-        let ui_clone = Rc::clone(&ui);
         let file_list = Cache::read_all();
         if file_list.len() != 0 {
             for file in file_list {
-                Self::update(
-                    &ui_clone,
-                    &notebook,
-                    &config_clone,
-                    Some(file),
-                    &inhibit_notebook,
-                );
+                Self::update(&ui, &notebook, &config, Some(file), &inhibit_notebook);
             }
         } else {
-            Self::update(&ui_clone, &notebook, &config_clone, None, &inhibit_notebook);
+            Self::update(&ui, &notebook, &config, None, &inhibit_notebook);
         }
 
         window.show_all();
@@ -409,11 +396,10 @@ impl UI {
         scroll.add(&chat_box_layout);
         notebook.insert_page(&scroll, Some(&tab), None);
 
-        let ui_clone = Rc::clone(&ui);
-        close_button.connect_clicked(clone!(@weak notebook => move |_| {
+        close_button.connect_clicked(clone!(@weak notebook, @strong ui => move |_| {
             let index = notebook.page_num(&scroll).expect("Couldn't get page_num from notebook");
-            fs::remove_file(ui_clone.borrow().tabs[index as usize].file.clone()).ok();
-            ui_clone.borrow_mut().tabs.remove(index as usize);
+            fs::remove_file(ui.borrow().tabs[index as usize].file.clone()).ok();
+            ui.borrow_mut().tabs.remove(index as usize);
             notebook.remove_page(Some(index));
         }));
 
@@ -421,7 +407,7 @@ impl UI {
         let tab_id = ui.borrow().tab_count;
         let file =
             file.unwrap_or_else(|| PathBuf::from(format!("{}/{}-history.json", PATH, real_time())));
-        let chats = Cache::read(file.clone());
+        let chats = Cache::read(&file);
         let model = if let Some(model) = chats["model"].as_str() {
             Some(model.to_string())
         } else {
@@ -488,7 +474,7 @@ impl UI {
 
 #[tokio::main]
 async fn main() {
-    let config = Config::new();
+    let config = Arc::new(Config::new());
     let app = Application::builder()
         .application_id("com.github.vishruth-thimmaiah.converse")
         .build();
@@ -500,7 +486,7 @@ async fn main() {
     }
 
     app.connect_activate(move |app| {
-        UI::build_ui(app, config.clone());
+        UI::build_ui(app, &config);
     });
     app.run();
 }
