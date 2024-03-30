@@ -53,6 +53,7 @@ impl Tabs {
 struct UI {
     tabs: Vec<Tabs>,
     tab_count: usize,
+    model_count: u32,
 }
 
 impl UI {
@@ -60,6 +61,7 @@ impl UI {
         let ui = Rc::new(RefCell::new(UI {
             tabs: Vec::new(),
             tab_count: 0,
+            model_count: 0,
         }));
         let window = ApplicationWindow::builder()
             .application(app)
@@ -120,6 +122,7 @@ impl UI {
         let model_list = ListStore::new(&[String::static_type()]);
         for model in get_models(&config) {
             model_list.set(&model_list.append(), &[(0, &model)]);
+            ui.borrow_mut().model_count += 1;
         }
         model_combobox.set_model(Some(&model_list));
         model_combobox.set_active(Some(0));
@@ -162,7 +165,8 @@ impl UI {
         // Event Handlers.
 
         // Key bindings
-        window.connect_key_press_event(clone!(@weak send_button, @weak notebook, @weak entry, @weak ui => @default-return Propagation::Proceed, move |window, event| {
+        window.connect_key_press_event(
+            clone!(@weak send_button, @weak notebook, @weak entry, @weak model_combobox, @weak ui => @default-return Propagation::Proceed, move |window, event| {
             let modifier = if event.state().is_empty() {
                 None
             } else {
@@ -176,6 +180,26 @@ impl UI {
 
                 (keys::Return, None) => {
                     send_button.emit_clicked();
+                    Propagation::Stop
+                }
+
+                (keys::j, Some(ModifierType::CONTROL_MASK)) | (keys::n, Some(ModifierType::CONTROL_MASK)) => {
+                    if let Some(page_number) = notebook.current_page() {
+                        let current_page = &ui.borrow().tabs[page_number as usize ].tab;
+                        let scroll: ScrolledWindow = current_page.parent().unwrap().parent().unwrap().downcast().unwrap();
+                        let adj = scroll.vadjustment();
+                        adj.set_value(adj.value()+40.0);
+                    }
+                    Propagation::Stop
+                }
+
+                (keys::k, Some(ModifierType::CONTROL_MASK)) | (keys::p, Some(ModifierType::CONTROL_MASK)) => {
+                    if let Some(page_number) = notebook.current_page() {
+                        let current_page = &ui.borrow().tabs[page_number as usize ].tab;
+                        let scroll: ScrolledWindow = current_page.parent().unwrap().parent().unwrap().downcast().unwrap();
+                        let adj = scroll.vadjustment();
+                        adj.set_value(adj.value()-40.0);
+                    }
                     Propagation::Stop
                 }
 
@@ -196,6 +220,22 @@ impl UI {
 
                 (keys::l, Some(ModifierType::CONTROL_MASK)) => {
                     entry.grab_focus();
+                    Propagation::Stop
+                }
+
+                (keys::Tab, None) => {
+                    if model_combobox.is_sensitive() {
+                        let next = model_combobox.active().map(|x| {if x == ui.borrow().model_count -1 {0} else {x+1}});
+                        model_combobox.set_active(next);
+                    }
+                    Propagation::Stop
+                }
+
+                (keys::ISO_Left_Tab, Some(ModifierType::SHIFT_MASK)) => {
+                    if model_combobox.is_sensitive() {
+                        let previous = model_combobox.active().map(|x| {if x == 0 {ui.borrow().model_count -1} else {x-1}});
+                        model_combobox.set_active(previous);
+                    }
                     Propagation::Stop
                 }
 
