@@ -1,4 +1,4 @@
-use phf::phf_map;
+use phf::{phf_map, phf_ordered_map};
 use regex::Regex;
 
 use super::config::{Config, Theming};
@@ -10,14 +10,19 @@ static ESC_PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
     r">" => r"&gt;"
 };
 
-static PATTERNS: phf::Map<&'static str, &'static str> = phf_map! {
-    r"^[-\*][^\*](.*)" => r" • $1",
+static PATTERNS: phf::OrderedMap<&'static str, &'static str> = phf_ordered_map! {
+    r"^[-\*] (.*)" => r" • $1",
+    r"\*\*\*(.*?)\*\*\*" => r"<b><i>$1</i></b>",
     r"\*\*(.*?)\*\*" => r"<b>$1</b>",
-    r"[^\*]\*(.+?)\*[^\*]" => r"<i>$1</i>",
+    r"\*(.+?)\*" => r"<i>$1</i>",
+    r"~~(.*?)~~" => r"<s>$1</s>",
     r"\[(.*)\]\((.*)\)" => r"<a href='$2'>$1</a>",
-    r"^#(.*)" => r"<big>$1</big>",
-    r"^##(.*)" => r"<big><big>$1</big></big>",
-    r"^###(.*?)" => r"<big><big><big>$1</big></big></big>",
+    r"^###### (.*)" => r"<big>$1</big>",
+    r"^##### (.*)" => r"<big><big>$1</big></big>",
+    r"^#### (.*)" => r"<big><big><big>$1</big></big></big>",
+    r"^### (.*)" => r"<big><big><big><big>$1</big></big></big></big>",
+    r"^## (.*)" => r"<big><big><big><big><big>$1</big></big></big></big></big>",
+    r"^# (.*)" => r"<big><big><big><big><big><big>$1</big></big></big></big></big></big>",
 };
 
 #[derive(Debug)]
