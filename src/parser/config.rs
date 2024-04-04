@@ -1,5 +1,6 @@
-use std::{env::var, fs};
+use std::{env::var, fs, path::PathBuf, process::exit};
 
+use clap::Parser;
 use serde::Deserialize;
 use serde_json::json;
 
@@ -175,13 +176,35 @@ impl Default for Config {
     }
 }
 
+#[derive(Parser)]
+#[command(version)]
+struct Args {
+    #[arg(short, long)]
+    /// Specify config file path
+    config: Option<PathBuf>,
+}
+
 impl Config {
     pub fn new() -> Config {
-        let toml_str = fs::read_to_string(format!("{}/.config/converse/config.toml", env!("HOME")))
-            .unwrap_or_default();
+        let args = Args::parse();
 
-        let config_file: Config =
-            toml::from_str(&toml_str).expect("Failed to deserialize config.toml");
+        let toml_str = if let Some(path) = args.config {
+            fs::read_to_string(path).unwrap_or_else(|e| {
+                eprintln!("Error reading file: {}", e);
+                exit(1)
+            })
+        } else {
+            fs::read_to_string(format!("{}/.config/converse/config.toml", env!("HOME")))
+                .unwrap_or_else(|e| {
+                    eprintln!("Error reading file: {}; using default values.", e);
+                    String::new()
+                })
+        };
+
+        let config_file: Config = toml::from_str(&toml_str).unwrap_or_else(|e| {
+            eprintln!("Error deserializing the file: {}", e);
+            exit(1)
+        });
 
         if config_file.gemini.use_model != 0 && config_file.gemini.api.is_empty() {
             eprintln!("Please set gemini api key in config.toml");

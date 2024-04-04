@@ -528,5 +528,7 @@ async fn main() {
     app.connect_activate(move |app| {
         UI::build_ui(app, &config);
     });
-    app.run();
+
+    let empty: Vec<String> = vec![];
+    app.run_with_args(&empty);
 }
