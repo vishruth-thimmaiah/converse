@@ -27,6 +27,7 @@ pub struct Theming {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(default)]
 pub struct General {
+    pub history_path: PathBuf,
     pub use_gtk_layer: bool,
     pub layer_margin_top: i32,
     pub layer_margin_bottom: i32,
@@ -85,6 +86,7 @@ impl Default for Theming {
 impl Default for General {
     fn default() -> Self {
         Self {
+            history_path: PathBuf::from(format!("{}/.cache/converse", env!("HOME"))),
             use_gtk_layer: false,
             layer_margin_top: 0,
             layer_margin_bottom: 0,

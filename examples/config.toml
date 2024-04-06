@@ -10,6 +10,9 @@ layer_margin_bottom = 5
 layer_margin_left = 1300
 layer_margin_right = 5
 
+# change dir used to store the conversation history
+# history_path = ".cache/converse"
+
 [theming]
 # Hex values for some text elements:
 quote_indicator = "#dddddd"

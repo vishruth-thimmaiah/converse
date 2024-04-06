@@ -7,8 +7,6 @@ use serde_json::json;
 
 use crate::models::ChatContent;
 
-pub const PATH: &str = concat!(env!("HOME"), "/.cache/converse");
-
 pub struct Cache {}
 
 impl Cache {
@@ -23,7 +21,6 @@ impl Cache {
     }
 
     fn write(path: PathBuf, response: serde_json::Value) {
-        fs::create_dir(PATH).ok();
         let cache_file = serde_json::to_string(&response).expect("Could not Serialize");
         fs::write(path, cache_file).expect("Could not write.");
     }
@@ -57,9 +54,10 @@ impl Cache {
         Self::write(file, conversation);
     }
 
-    pub fn read_all() -> Vec<PathBuf> {
+    pub fn read_all(dir_path: PathBuf) -> Vec<PathBuf> {
+        fs::create_dir(&dir_path).ok();
         let mut dir_files = Vec::new();
-        if let Ok(files) = fs::read_dir(PATH) {
+        if let Ok(files) = fs::read_dir(dir_path) {
             for file in files {
                 dir_files.push(file.expect("Error reading file").path())
             }

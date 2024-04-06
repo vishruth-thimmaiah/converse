@@ -3,7 +3,7 @@ mod parser;
 
 use models::get_models;
 use parser::{
-    cache::{Cache, PATH},
+    cache::Cache,
     config::Config,
     md2pango::md2pango,
 };
@@ -54,6 +54,7 @@ struct UI {
     tabs: Vec<Tabs>,
     tab_count: usize,
     model_count: u32,
+    history_path: PathBuf
 }
 
 impl UI {
@@ -62,6 +63,7 @@ impl UI {
             tabs: Vec::new(),
             tab_count: 0,
             model_count: 0,
+            history_path: PathBuf::from(config.general.history_path.clone()),
         }));
         let window = ApplicationWindow::builder()
             .application(app)
@@ -362,7 +364,7 @@ impl UI {
             }),
         );
 
-        let file_list = Cache::read_all();
+        let file_list = Cache::read_all(config.general.history_path.clone());
         if file_list.len() != 0 {
             for file in file_list {
                 Self::update(&ui, &notebook, &config, Some(file), &inhibit_notebook);
@@ -446,7 +448,7 @@ impl UI {
         ui.borrow_mut().tab_count += 1;
         let tab_id = ui.borrow().tab_count;
         let file =
-            file.unwrap_or_else(|| PathBuf::from(format!("{}/{}-history.json", PATH, real_time())));
+            file.unwrap_or_else(|| ui.borrow().history_path.join(real_time().to_string() + "-history.json"));
         let chats = Cache::read(&file);
         let model = if let Some(model) = chats["model"].as_str() {
             Some(model.to_string())
