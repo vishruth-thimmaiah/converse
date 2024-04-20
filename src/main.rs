@@ -425,7 +425,7 @@ impl UI {
 
         let tab = gtk::Box::new(gtk::Orientation::Horizontal, 0);
         let tab_label =
-            gtk::Label::new(Some(&format!("Session {}", notebook.children().len() + 1)));
+            gtk::Label::new(Some(&format!("Session {}", ui.borrow().tab_count + 1)));
         let close_image =
             gtk::Image::from_icon_name(Some("window-close-symbolic"), gtk::IconSize::Button);
         let close_button = gtk::Button::new();
