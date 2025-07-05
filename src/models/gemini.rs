@@ -8,7 +8,7 @@ use super::ChatContent;
 pub struct Gemini {}
 
 const URL: &str =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=";
+    "https://generativelanguage.googleapis.com/v1beta/models/MODEL:generateContent?key=";
 
 impl Gemini {
     pub async fn request(
@@ -16,7 +16,7 @@ impl Gemini {
         config: &ConfigGemini,
         init_input: &serde_json::Value,
     ) -> Result<ChatContent, Error> {
-        let url = format!("{}{}", URL, config.api);
+        let url = format!("{}{}", URL.replace("MODEL", &config.model), config.api);
         let mut conversation = Self::create_query(&config.conversation_input, &init_input);
         conversation["contents"].as_array_mut().unwrap().push(json!(
             {

@@ -40,6 +40,7 @@ pub struct General {
 pub struct ConfigGemini {
     pub api: String,
     pub use_model: u32,
+    pub model: String,
     pub conversation_input: serde_json::Value,
 }
 
@@ -107,6 +108,7 @@ impl Default for ConfigGemini {
                 }
             },
             use_model: 2,
+            model: "gemini-2.5-pro".to_string(),
             conversation_input: json!([]),
         }
     }
